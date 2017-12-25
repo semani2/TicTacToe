@@ -3,4 +3,7 @@
     <string name="str_login">Login</string>
     <string name="str_password">Password</string>
     <string name="str_email">Email</string>
+    <string name="str_players_email">Enter player\'s email</string>
+    <string name="str_accept">Accept</string>
+    <string name="str_request">Request</string>
 </resources>

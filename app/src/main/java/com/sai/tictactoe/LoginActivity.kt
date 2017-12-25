@@ -56,6 +56,10 @@ class LoginActivity : AppCompatActivity() {
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
+                            //Save user in Firebase database
+                            if(mAuth.currentUser != null) {
+                                dbRef.child(USERS).child(splitEmail(mAuth.currentUser!!.email)).child(REQUEST).setValue(mAuth.currentUser!!.uid)
+                            }
                             goToMain()
                         } else {
                             showMessage("There was an error logging in. Please verify your email and password.")
@@ -68,10 +72,6 @@ class LoginActivity : AppCompatActivity() {
         val currentUser: FirebaseUser? = mAuth.currentUser
 
         if(currentUser != null) {
-
-            //Save user in Firebase database
-            dbRef.child(users).child(currentUser.uid).setValue(currentUser.email)
-
             val mainIntent = Intent(this, MainActivity::class.java)
             mainIntent.putExtra(ARG_EMAIL, currentUser.email)
             mainIntent.putExtra(ARG_ID, currentUser.uid)
@@ -83,10 +83,16 @@ class LoginActivity : AppCompatActivity() {
     }
 }
 
-private fun EditText.getString(): String = this.text.toString()
-private fun EditText.isBlank() = this.text.toString().isBlank()
-private fun EditText.isValidEmail() = !this.isBlank()
+fun EditText.getString(): String = this.text.toString()
+fun EditText.isBlank() = this.text.toString().isBlank()
+fun EditText.isValidEmail() = !this.isBlank()
         && Patterns.EMAIL_ADDRESS.matcher(this.text.toString()).matches()
-private fun EditText.isValidPassword() = !this.isBlank() && this.text.toString().length >= 6
+fun EditText.isValidPassword() = !this.isBlank() && this.text.toString().length >= 6
+fun splitEmail(str: String?) : String? {
+    if(str != null) {
+        return str.split("@")[0]
+    }
+    return str
+}
 
 fun Activity.showMessage(msg:String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()

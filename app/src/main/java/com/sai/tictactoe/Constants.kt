@@ -10,4 +10,7 @@ val ARG_EMAIL = "arg_email"
 val ARG_ID = "arg_id"
 
 //Firebase database constants
-val users = "Users"
+val USERS = "Users"
+val REQUEST = "Request"
+val ONLINE_PLAY = "Online_play"
+val KEY = "Key-"

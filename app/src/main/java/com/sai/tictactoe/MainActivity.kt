@@ -1,6 +1,5 @@
 package com.sai.tictactoe
 
-import android.app.Activity
 import android.graphics.Color
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -10,8 +9,14 @@ import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,11 +30,25 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var mFirebaseAnalytics: FirebaseAnalytics
 
+    private var mDatabase = FirebaseDatabase.getInstance()
+    private val dbRef = mDatabase.reference
+
+    private lateinit var currentUserEmail: String
+    private lateinit var currentUserId: String
+
+    private lateinit var sessionId: String
+    private lateinit var playerSymbol: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+
+        currentUserEmail = intent.extras.getString(ARG_EMAIL)
+        currentUserId = intent.extras.getString(ARG_ID)
+
+        incomingRequests()
     }
 
     fun buttonClick(v: View) {
@@ -48,7 +67,32 @@ class MainActivity : AppCompatActivity() {
         }
 
         Log.d(TAG, "Clicked button $cellId")
-        playGame(cellId, buttonClicked)
+        // Commenting out for now, we can have both online and local playing based on settings.
+        //playGame(cellId, buttonClicked)
+
+        // Online play
+        dbRef.child(ONLINE_PLAY).child(sessionId).child(KEY + cellId.toString()).setValue(currentUserEmail)
+    }
+
+    fun acceptButtonClick(v: View) {
+        var requestedUserEmail = email_edit_text.getString()
+        dbRef.child(USERS).child(splitEmail(requestedUserEmail)).child(REQUEST).push().setValue(currentUserEmail)
+
+        playOnline(splitEmail(requestedUserEmail) + splitEmail(currentUserEmail)) // will create the same node to play
+        playerSymbol = "O"
+    }
+
+    fun requestButtonClick(v: View) {
+        if(email_edit_text.isValidEmail()) {
+            var email = email_edit_text.getString()
+            dbRef.child(USERS).child(splitEmail(email)).child(REQUEST).push().setValue(currentUserEmail)
+
+            playOnline(splitEmail(currentUserEmail) + splitEmail(email))
+            playerSymbol = "X"
+
+        } else {
+            email_edit_text.error = "Please enter a valid email"
+        }
     }
 
     fun playGame(cellId: Int, selectedButton: Button) {
@@ -72,7 +116,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if(activePlayer == 2) autoPlay()
+        //if(activePlayer == 2) autoPlay()
     }
 
     fun checkWinner() : Boolean{
@@ -187,8 +231,82 @@ class MainActivity : AppCompatActivity() {
         }, 1000)
     }
 
-    private fun resetBoard() {
+    fun playForOpponent(cellId: Int) {
+        val buttonToSelect= when(cellId) {
+            1 -> button1
+            2 -> button2
+            3 -> button3
+            4 -> button4
+            5 -> button5
+            6 -> button6
+            7 -> button7
+            8 -> button8
+            9 -> button9
+            else -> null
+        }
+        playGame(cellId, buttonToSelect!!)
+    }
 
+    private fun resetBoard() {
+        player1.clear()
+        player2.clear()
+
+        dbRef.child(ONLINE_PLAY).child(sessionId).setValue(null)
+    }
+
+    fun incomingRequests() {
+        dbRef.child(USERS).child(splitEmail(currentUserEmail)).child(REQUEST)
+                .addValueEventListener(object : ValueEventListener {
+                    override fun onCancelled(p0: DatabaseError?) {
+
+                    }
+
+                    override fun onDataChange(data: DataSnapshot?) {
+                        try {
+                            if (data != null) {
+                                val values = data.value as HashMap<String, Any>
+                                var requestEmail: String = values[values.keys.last()] as String
+                                email_edit_text.setText(requestEmail)
+
+                                dbRef.child(USERS).child(splitEmail(currentUserEmail)).child(REQUEST).setValue(true)
+                            }
+                        } catch (ex: Exception) {
+
+                        }
+                    }
+
+                })
+    }
+
+    fun playOnline(sessionId: String) {
+        this.sessionId = sessionId
+
+        dbRef.child(ONLINE_PLAY).child(sessionId)
+                .addValueEventListener(object: ValueEventListener {
+                    override fun onCancelled(p0: DatabaseError?) {
+                        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                    }
+
+                    override fun onDataChange(data: DataSnapshot?) {
+                        try {
+                            if (data != null) {
+                                val values = data.value as HashMap<String, Any>
+
+                                var player = values[values.keys.last()]
+
+                                activePlayer = if(player != currentUserEmail) {
+                                    if(playerSymbol === "X") 1 else 2
+                                } else {
+                                    if(playerSymbol === "X") 2 else 1
+                                }
+
+                                playForOpponent(values.keys.last().split("-")[1].toInt())
+                            }
+                        } catch (ex: Exception) {
+                            Log.d(TAG, ex.printStackTrace().toString())
+                        }
+                    }
+                })
     }
 
     fun showMessage(msg:String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
