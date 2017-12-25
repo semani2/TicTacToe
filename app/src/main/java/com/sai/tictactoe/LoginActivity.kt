@@ -1,15 +1,16 @@
 package com.sai.tictactoe
 
 import android.app.Activity
+import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import android.widget.EditText
 import android.widget.Toast
-import com.google.android.gms.tasks.OnFailureListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.android.synthetic.main.activity_login.*
 
 class LoginActivity : AppCompatActivity() {
@@ -17,6 +18,9 @@ class LoginActivity : AppCompatActivity() {
     private val TAG = LoginActivity::class.java.simpleName
 
     private lateinit var mAuth: FirebaseAuth
+
+    private var mDatabase = FirebaseDatabase.getInstance()
+    private val dbRef = mDatabase.reference
 
     private var mCurrentUser: FirebaseUser? = null
 
@@ -30,6 +34,7 @@ class LoginActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         mCurrentUser = mAuth.currentUser
+        goToMain()
     }
 
     fun loginClicked(v: View) {
@@ -51,11 +56,29 @@ class LoginActivity : AppCompatActivity() {
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
-                            showMessage("Login successful")
+                            goToMain()
                         } else {
-                            showMessage("Login failed" + task.exception)
+                            showMessage("There was an error logging in. Please verify your email and password.")
                         }
                     }
+        }
+    }
+
+    fun goToMain() {
+        val currentUser: FirebaseUser? = mAuth.currentUser
+
+        if(currentUser != null) {
+
+            //Save user in Firebase database
+            dbRef.child(users).child(currentUser.uid).setValue(currentUser.email)
+
+            val mainIntent = Intent(this, MainActivity::class.java)
+            mainIntent.putExtra(ARG_EMAIL, currentUser.email)
+            mainIntent.putExtra(ARG_ID, currentUser.uid)
+
+            startActivity(mainIntent)
+
+            showMessage("Welcome!")
         }
     }
 }
