@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="@string/str_play_ai"
+        android:id="@+id/menu_play_ai"
+        app:showAsAction="ifRoom"/>
+
+    <item android:title="@string/str_play_online"
+        android:id="@+id/menu_play_online"
+        app:showAsAction="ifRoom"
+        android:visible="false" />
+</menu>

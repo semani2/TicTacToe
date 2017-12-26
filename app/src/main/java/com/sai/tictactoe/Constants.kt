@@ -14,3 +14,8 @@ val USERS = "Users"
 val REQUEST = "Request"
 val ONLINE_PLAY = "Online_play"
 val KEY = "Key-"
+
+enum class GamePlay {
+    AI,
+    ONLINE
+}

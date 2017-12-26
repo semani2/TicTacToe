@@ -1,10 +1,14 @@
 package com.sai.tictactoe
 
-import android.graphics.Color
+import android.content.Context
+import android.content.SharedPreferences
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.support.design.widget.Snackbar
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
@@ -21,6 +25,9 @@ import kotlin.collections.HashMap
 class MainActivity : AppCompatActivity() {
 
     private val TAG: String = MainActivity::class.java.simpleName
+
+    private val SP_NAME = "com.sai.tictactoe"
+    private val SP_KEY = "game_play"
 
     private val handler = Handler()
 
@@ -39,6 +46,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sessionId: String
     private lateinit var playerSymbol: String
 
+    private var currentGamePlay: GamePlay = GamePlay.AI
+
+    private lateinit var sharedPreferences: SharedPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -49,6 +60,12 @@ class MainActivity : AppCompatActivity() {
         currentUserId = intent.extras.getString(ARG_ID)
 
         incomingRequests()
+
+        sharedPreferences = getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
+
+        if(sharedPreferences.contains(SP_KEY)) {
+            currentGamePlay = GamePlay.valueOf(sharedPreferences.getString(SP_KEY, GamePlay.AI.name))
+        }
     }
 
     fun buttonClick(v: View) {
@@ -68,10 +85,11 @@ class MainActivity : AppCompatActivity() {
 
         Log.d(TAG, "Clicked button $cellId")
         // Commenting out for now, we can have both online and local playing based on settings.
-        //playGame(cellId, buttonClicked)
-
-        // Online play
-        dbRef.child(ONLINE_PLAY).child(sessionId).child(KEY + cellId.toString()).setValue(currentUserEmail)
+        if(currentGamePlay == GamePlay.AI) {
+            playGame(cellId, buttonClicked)
+        } else {
+            dbRef.child(ONLINE_PLAY).child(sessionId).child(KEY + cellId.toString()).setValue(currentUserEmail)
+        }
     }
 
     fun acceptButtonClick(v: View) {
@@ -100,23 +118,21 @@ class MainActivity : AppCompatActivity() {
 
         if(activePlayer == 1) {
             selectedButton.text = "X"
-            selectedButton.setBackgroundColor(Color.GREEN)
             player1.add(cellId)
             activePlayer = 2
         } else {
             selectedButton.text = "O"
-            selectedButton.setBackgroundColor(Color.BLUE)
             player2.add(cellId)
             activePlayer = 1
         }
 
         if(checkWinner()) {
             Log.d(TAG, "Game over")
-            resetBoard()
+            resetGame()
             return
         }
 
-        //if(activePlayer == 2) autoPlay()
+        if(currentGamePlay == GamePlay.AI && activePlayer == 2) autoPlay()
     }
 
     fun checkWinner() : Boolean{
@@ -196,9 +212,9 @@ class MainActivity : AppCompatActivity() {
 
         if(winner != -1) {
             if(winner == 1) {
-                showMessage("Player 1 wins the game")
+                showGameOverMessage("Player 1 wins the game")
             } else {
-                showMessage("Player 2 wins the game")
+                showGameOverMessage("Player 2 wins the game")
             }
             return true
         }
@@ -247,11 +263,30 @@ class MainActivity : AppCompatActivity() {
         playGame(cellId, buttonToSelect!!)
     }
 
-    private fun resetBoard() {
+    private fun resetGame() {
         player1.clear()
         player2.clear()
 
-        dbRef.child(ONLINE_PLAY).child(sessionId).setValue(null)
+        if(currentGamePlay == GamePlay.ONLINE) {
+            dbRef.child(ONLINE_PLAY).child(sessionId).setValue(null)
+        }
+
+        // Clear board
+        clearAllButtons()
+    }
+
+    private fun clearAllButtons() {
+        handler.postDelayed({
+            button1.reset()
+            button2.reset()
+            button3.reset()
+            button4.reset()
+            button5.reset()
+            button6.reset()
+            button7.reset()
+            button8.reset()
+            button9.reset()
+        }, 3000)
     }
 
     fun incomingRequests() {
@@ -310,4 +345,43 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showMessage(msg:String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId) {
+            R.id.menu_play_ai -> {
+                sharedPreferences.edit().putString(SP_KEY, GamePlay.AI.name).apply()
+            }
+
+            R.id.menu_play_online -> {
+                sharedPreferences.edit().putString(SP_KEY, GamePlay.ONLINE.name).apply()
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        if(currentGamePlay === GamePlay.AI) {
+            menu!!.findItem(R.id.menu_play_online).isVisible = true
+            menu!!.findItem(R.id.menu_play_ai).isVisible = false
+        } else {
+            menu!!.findItem(R.id.menu_play_online).isVisible = false
+            menu!!.findItem(R.id.menu_play_ai).isVisible = true
+        }
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    fun showGameOverMessage(msg: String) {
+        val snackbar = Snackbar.make(main_layout, msg, Snackbar.LENGTH_LONG)
+        snackbar.show()
+    }
+}
+
+fun Button.reset() {
+    this.text = ""
+    this.isEnabled = true
 }
