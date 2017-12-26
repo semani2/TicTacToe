@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.support.design.widget.Snackbar
+import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -21,6 +22,11 @@ import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import android.view.LayoutInflater
+import android.widget.EditText
+import android.widget.TextView
+import kotlinx.android.synthetic.main.request_dialog_layout.*
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -50,6 +56,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var sharedPreferences: SharedPreferences
 
+    private var shouldShowDialog: Boolean = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -65,6 +73,10 @@ class MainActivity : AppCompatActivity() {
 
         if(sharedPreferences.contains(SP_KEY)) {
             currentGamePlay = GamePlay.valueOf(sharedPreferences.getString(SP_KEY, GamePlay.AI.name))
+        }
+
+        if(currentGamePlay == GamePlay.ONLINE) {
+            request_fab.visibility = View.VISIBLE
         }
     }
 
@@ -92,24 +104,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun acceptButtonClick(v: View) {
-        var requestedUserEmail = email_edit_text.getString()
+    fun acceptButtonClick(editText: EditText) {
+        var requestedUserEmail = editText.getString()
         dbRef.child(USERS).child(splitEmail(requestedUserEmail)).child(REQUEST).push().setValue(currentUserEmail)
 
         playOnline(splitEmail(requestedUserEmail) + splitEmail(currentUserEmail)) // will create the same node to play
         playerSymbol = "O"
+        currentGamePlay = GamePlay.ONLINE
+        invalidateOptionsMenu()
     }
 
-    fun requestButtonClick(v: View) {
-        if(email_edit_text.isValidEmail()) {
-            var email = email_edit_text.getString()
+    fun requestButtonClick(editText: EditText) {
+        if(editText.isValidEmail()) {
+            var email = editText.getString()
             dbRef.child(USERS).child(splitEmail(email)).child(REQUEST).push().setValue(currentUserEmail)
 
             playOnline(splitEmail(currentUserEmail) + splitEmail(email))
             playerSymbol = "X"
 
         } else {
-            email_edit_text.error = "Please enter a valid email"
+            editText.error = "Please enter a valid email"
         }
     }
 
@@ -301,7 +315,9 @@ class MainActivity : AppCompatActivity() {
                             if (data != null) {
                                 val values = data.value as HashMap<String, Any>
                                 var requestEmail: String = values[values.keys.last()] as String
-                                email_edit_text.setText(requestEmail)
+                                if(shouldShowDialog) {
+                                    showAcceptDialog(requestEmail)
+                                }
 
                                 dbRef.child(USERS).child(splitEmail(currentUserEmail)).child(REQUEST).setValue(true)
                             }
@@ -311,6 +327,34 @@ class MainActivity : AppCompatActivity() {
                     }
 
                 })
+    }
+
+    private fun showAcceptDialog(requestEmail: String) {
+        val inflater = layoutInflater
+        val dialoglayout = inflater.inflate(R.layout.request_dialog_layout, null)
+
+        val requestAcceptButton = dialoglayout.findViewById<Button>(R.id.request_accept_button)
+        val playerEmailEditText = dialoglayout.findViewById<EditText>(R.id.player_email_edit_text)
+        val requestTextView = dialoglayout.findViewById<TextView>(R.id.request_text_view)
+
+        requestTextView.visibility = View.VISIBLE
+
+        requestAcceptButton.text = getString(R.string.str_accept)
+
+        playerEmailEditText.setText(requestEmail)
+        playerEmailEditText.isEnabled = false
+
+        val builder = AlertDialog.Builder(this)
+        builder.setView(dialoglayout)
+
+        val dialog = builder.create()
+        requestAcceptButton.setOnClickListener {
+            acceptButtonClick(playerEmailEditText)
+            dialog.dismiss()
+        }
+
+        dialog.show()
+        shouldShowDialog = false
     }
 
     fun playOnline(sessionId: String) {
@@ -355,12 +399,17 @@ class MainActivity : AppCompatActivity() {
         when(item.itemId) {
             R.id.menu_play_ai -> {
                 sharedPreferences.edit().putString(SP_KEY, GamePlay.AI.name).apply()
+                currentGamePlay = GamePlay.AI
+                request_fab.visibility = View.GONE
             }
 
             R.id.menu_play_online -> {
                 sharedPreferences.edit().putString(SP_KEY, GamePlay.ONLINE.name).apply()
+                currentGamePlay = GamePlay.ONLINE
+                request_fab.visibility = View.VISIBLE
             }
         }
+        invalidateOptionsMenu()
         return super.onOptionsItemSelected(item)
     }
 
@@ -378,6 +427,26 @@ class MainActivity : AppCompatActivity() {
     fun showGameOverMessage(msg: String) {
         val snackbar = Snackbar.make(main_layout, msg, Snackbar.LENGTH_LONG)
         snackbar.show()
+    }
+
+    fun requestFABClick(v: View) {
+        val inflater = layoutInflater
+        val dialoglayout = inflater.inflate(R.layout.request_dialog_layout, null)
+
+        val requestAcceptButton = dialoglayout.findViewById<Button>(R.id.request_accept_button)
+        val playerEmailEditText = dialoglayout.findViewById<EditText>(R.id.player_email_edit_text)
+
+        requestAcceptButton.text = getString(R.string.str_request)
+
+        val builder = AlertDialog.Builder(this)
+        builder.setView(dialoglayout)
+
+        val dialog = builder.create()
+        requestAcceptButton.setOnClickListener {
+            requestButtonClick(playerEmailEditText)
+            dialog.dismiss()
+        }
+        dialog.show()
     }
 }
 

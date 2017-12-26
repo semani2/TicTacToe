@@ -81,4 +81,5 @@
     <string name="pref_title_vibrate">Vibrate</string>
     <string name="str_play_ai">Play AI</string>
     <string name="str_play_online">Play online</string>
+    <string name="str_request_from">You have a game request from:</string>
 </resources>
