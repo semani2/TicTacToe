@@ -12,20 +12,16 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
-import android.widget.Toast
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.activity_main.*
-import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
-import android.view.LayoutInflater
 import android.widget.EditText
 import android.widget.TextView
-import kotlinx.android.synthetic.main.request_dialog_layout.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -49,7 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var currentUserEmail: String
     private lateinit var currentUserId: String
 
-    private lateinit var sessionId: String
+    private var sessionId: String? = null
     private lateinit var playerSymbol: String
 
     private var currentGamePlay: GamePlay = GamePlay.AI
@@ -57,6 +53,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
 
     private var shouldShowDialog: Boolean = true
+
+    private var shouldShowTurnText: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,6 +76,18 @@ class MainActivity : AppCompatActivity() {
         if(currentGamePlay == GamePlay.ONLINE) {
             request_fab.visibility = View.VISIBLE
         }
+
+        showTurnTextIfNecessary()
+    }
+
+    private fun showTurnTextIfNecessary() {
+        shouldShowTurnText = if(currentGamePlay == GamePlay.AI) {
+            activePlayer == 1
+        } else {
+            ((activePlayer == 1 && playerSymbol == "X") || (activePlayer == 2 && playerSymbol == "O"))
+        }
+
+        turn_text_view.visibility = if(shouldShowTurnText) View.VISIBLE else View.GONE
     }
 
     fun buttonClick(v: View) {
@@ -100,11 +110,15 @@ class MainActivity : AppCompatActivity() {
         if(currentGamePlay == GamePlay.AI) {
             playGame(cellId, buttonClicked)
         } else {
-            dbRef.child(ONLINE_PLAY).child(sessionId).child(KEY + cellId.toString()).setValue(currentUserEmail)
+            if(sessionId != null) {
+                dbRef.child(ONLINE_PLAY).child(sessionId).child(KEY + cellId.toString()).setValue(currentUserEmail)
+            } else {
+                showMessage("Send a request to start a game")
+            }
         }
     }
 
-    fun acceptButtonClick(editText: EditText) {
+    private fun acceptButtonClick(editText: EditText) {
         var requestedUserEmail = editText.getString()
         dbRef.child(USERS).child(splitEmail(requestedUserEmail)).child(REQUEST).push().setValue(currentUserEmail)
 
@@ -114,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         invalidateOptionsMenu()
     }
 
-    fun requestButtonClick(editText: EditText) {
+    private fun requestButtonClick(editText: EditText) {
         if(editText.isValidEmail()) {
             var email = editText.getString()
             dbRef.child(USERS).child(splitEmail(email)).child(REQUEST).push().setValue(currentUserEmail)
@@ -127,7 +141,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun playGame(cellId: Int, selectedButton: Button) {
+    private fun playGame(cellId: Int, selectedButton: Button) {
         selectedButton.isEnabled = false
 
         if(activePlayer == 1) {
@@ -139,6 +153,7 @@ class MainActivity : AppCompatActivity() {
             player2.add(cellId)
             activePlayer = 1
         }
+        showTurnTextIfNecessary()
 
         if(checkWinner()) {
             Log.d(TAG, "Game over")
@@ -146,7 +161,7 @@ class MainActivity : AppCompatActivity() {
             (1..9).filterTo(emptyCells) { !player1.contains(it) && !player2.contains(it) }
 
             if(emptyCells.size == 0) {
-                showGameOverMessage("Well played! Game draw")
+                showMessage("Well played! Game draw")
             }
             resetGame()
             return
@@ -241,9 +256,9 @@ class MainActivity : AppCompatActivity() {
 
         if(winner != -1) {
             if(winner == 1) {
-                showGameOverMessage("Player 1 wins the game")
+                showMessage("Player 1 wins the game")
             } else {
-                showGameOverMessage("Player 2 wins the game")
+                showMessage("Player 2 wins the game")
             }
             return true
         }
@@ -626,8 +641,6 @@ class MainActivity : AppCompatActivity() {
                 })
     }
 
-    fun showMessage(msg:String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
@@ -662,7 +675,7 @@ class MainActivity : AppCompatActivity() {
         return super.onPrepareOptionsMenu(menu)
     }
 
-    fun showGameOverMessage(msg: String) {
+    fun showMessage(msg: String) {
         val snackbar = Snackbar.make(main_layout, msg, Snackbar.LENGTH_LONG)
         snackbar.show()
     }
