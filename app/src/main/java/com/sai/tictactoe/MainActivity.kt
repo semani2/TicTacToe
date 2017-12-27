@@ -283,105 +283,125 @@ class MainActivity : AppCompatActivity() {
 
         // row 1
         if((player1.contains(1) && player1.contains(2))) {
-            if((player2.contains(1) && player2.contains(2)) && emptyCells.contains(3)) {
-                winnerId = 3
-            }
             cellId = 3
         }
 
+        if((player2.contains(1) && player2.contains(2)) && emptyCells.contains(3)) {
+            cellId = 3
+            winnerId = 3
+        }
+
         if((player1.contains(1) && player1.contains(3))) {
-            if( (player2.contains(1) && player2.contains(3))  && emptyCells.contains(2)) {
-                winnerId = 2
-            }
+            cellId = 2
+        }
+
+        if( (player2.contains(1) && player2.contains(3))  && emptyCells.contains(2)) {
+            winnerId = 2
             cellId = 2
         }
 
         if(player1.contains(2) && player1.contains(3)) {
-            if(player2.contains(2) && player2.contains(3) &&  emptyCells.contains(1)) {
-                winnerId = 1
-            }
             cellId = 1
+        }
+
+        if(player2.contains(2) && player2.contains(3) &&  emptyCells.contains(1)) {
+            cellId = 1
+            winnerId = 1
         }
 
         // row 2
         if((player1.contains(4) && player1.contains(5))) {
-            if((player2.contains(4) && player2.contains(5))  && emptyCells.contains(6)) {
-                winnerId = 6
-            }
+            cellId = 6
+        }
+        if((player2.contains(4) && player2.contains(5))  && emptyCells.contains(6)) {
+            winnerId = 6
             cellId = 6
         }
 
         if((player1.contains(4) && player1.contains(6))) {
-            if((player2.contains(4) && player2.contains(6))  && emptyCells.contains(5)) {
-                winnerId = 5
-            }
+            cellId = 5
+        }
+
+        if((player2.contains(4) && player2.contains(6))  && emptyCells.contains(5)) {
+            winnerId = 5
             cellId = 5
         }
 
         if(player1.contains(5) && player1.contains(6)) {
-            if(player2.contains(5) && player2.contains(6) && emptyCells.contains(4)) {
-                winnerId = 4
-            }
+            cellId = 4
+        }
+
+        if(player2.contains(5) && player2.contains(6) && emptyCells.contains(4)) {
+            winnerId = 4
             cellId = 4
         }
 
         // row 3
         if((player1.contains(7) && player1.contains(8))) {
-            if((player2.contains(7) && player2.contains(9)) && emptyCells.contains(9)) {
-                winnerId = 9
-            }
+            cellId = 9
+        }
+        if((player2.contains(7) && player2.contains(9)) && emptyCells.contains(9)) {
+            winnerId = 9
             cellId = 9
         }
 
         if((player1.contains(7) && player1.contains(9))) {
-            if((player2.contains(7) && player2.contains(9)) && emptyCells.contains(8)) {
-                winnerId = 8
-            }
+            cellId = 8
+        }
+        if((player2.contains(7) && player2.contains(9)) && emptyCells.contains(8)) {
+            winnerId = 8
             cellId = 8
         }
 
         if(player1.contains(8) && player1.contains(9)) {
-            if(player2.contains(8) && player2.contains(9) && emptyCells.contains(7)) {
-                winnerId = 7
-            }
+            cellId = 7
+        }
+        if(player2.contains(8) && player2.contains(9) && emptyCells.contains(7)) {
+            winnerId = 7
             cellId = 7
         }
 
 
         // Col 1
         if((player1.contains(1) && player1.contains(4))) {
-            if((player2.contains(1) && player2.contains(4)) && emptyCells.contains(7)) {
-                winnerId = 7
-            }
+            cellId = 7
+        }
+        if((player2.contains(1) && player2.contains(4)) && emptyCells.contains(7)) {
+            winnerId = 7
             cellId = 7
         }
 
         if((player1.contains(1) && player1.contains(7))) {
-            if((player2.contains(1) && player2.contains(7)) && emptyCells.contains(4)) {
-                winnerId = 4
-            }
+            cellId = 4
+        }
+        if((player2.contains(1) && player2.contains(7)) && emptyCells.contains(4)) {
+            winnerId = 4
             cellId = 4
         }
 
         if(player1.contains(4) && player1.contains(7)) {
-            if(player2.contains(4) && player2.contains(7) && emptyCells.contains(1)) {
-                winnerId = 1
-            }
+            cellId = 1
+        }
+
+        if(player2.contains(4) && player2.contains(7) && emptyCells.contains(1)) {
+            winnerId = 1
             cellId = 1
         }
 
         // Col 2
         if((player1.contains(2) && player1.contains(5))) {
-            if( (player2.contains(2) && player2.contains(5)) && emptyCells.contains(8)) {
-                winnerId = 8
-            }
+            cellId = 8
+        }
+        if( (player2.contains(2) && player2.contains(5)) && emptyCells.contains(8)) {
+            winnerId = 8
             cellId = 8
         }
 
         if((player1.contains(2) && player1.contains(8))) {
-            if((player2.contains(2) && player2.contains(8)) && emptyCells.contains(5)) {
-                winnerId = 5
-            }
+            cellId = 5
+        }
+        if((player2.contains(2) && player2.contains(8)) && emptyCells.contains(5)) {
+            winnerId = 5
             cellId = 5
         }
 
@@ -394,67 +414,76 @@ class MainActivity : AppCompatActivity() {
 
         // Col 2
         if((player1.contains(3) && player1.contains(6))) {
-            if( (player2.contains(3) && player2.contains(6)) && emptyCells.contains(9)) {
-                winnerId = 9
-            }
+            cellId = 9
+        }
+        if( (player2.contains(3) && player2.contains(6)) && emptyCells.contains(9)) {
+            winnerId = 9
             cellId = 9
         }
 
         if((player1.contains(3) && player1.contains(9))) {
-            if((player2.contains(3) && player2.contains(9)) && emptyCells.contains(6)) {
-                winnerId = 6
-            }
+            cellId = 6
+        }
+        if((player2.contains(3) && player2.contains(9)) && emptyCells.contains(6)) {
+            winnerId = 6
             cellId = 6
         }
 
         if(player1.contains(6) && player1.contains(9)) {
-            if( player2.contains(6) && player2.contains(9) && emptyCells.contains(3)) {
-                winnerId = 3
-            }
+            cellId = 3
+        }
+        if( player2.contains(6) && player2.contains(9) && emptyCells.contains(3)) {
+            winnerId = 3
             cellId = 3
         }
 
         // Diagonal 1
         if((player1.contains(1) && player1.contains(5))) {
-            if((player2.contains(1) && player2.contains(5)) && emptyCells.contains(9)) {
-                winnerId = 9
-            }
+            cellId = 9
+        }
+        if((player2.contains(1) && player2.contains(5)) && emptyCells.contains(9)) {
+            winnerId = 9
             cellId = 9
         }
 
         if((player1.contains(5) && player1.contains(9))) {
-            if( (player2.contains(5) && player2.contains(9)) && emptyCells.contains(1)) {
-                winnerId = 1
-            }
+            cellId = 1
+        }
+        if( (player2.contains(5) && player2.contains(9)) && emptyCells.contains(1)) {
+            winnerId = 1
             cellId = 1
         }
 
         if(player1.contains(1) && player1.contains(9)) {
-            if(player2.contains(1) && player2.contains(9) && emptyCells.contains(5)) {
-                winnerId = 5
-            }
+            cellId = 5
+        }
+        if(player2.contains(1) && player2.contains(9) && emptyCells.contains(5)) {
+            winnerId = 5
             cellId = 5
         }
 
         // Diagonal 1
         if((player1.contains(3) && player1.contains(5))) {
-            if((player2.contains(3) && player2.contains(5)) && emptyCells.contains(7)) {
-                winnerId = 7
-            }
+            cellId = 7
+        }
+        if((player2.contains(3) && player2.contains(5)) && emptyCells.contains(7)) {
+            winnerId = 7
             cellId = 7
         }
 
         if((player1.contains(5) && player1.contains(7))) {
-            if( (player2.contains(5) && player2.contains(7)) && emptyCells.contains(3)) {
-                winnerId = 3
-            }
+            cellId = 3
+        }
+        if( (player2.contains(5) && player2.contains(7)) && emptyCells.contains(3)) {
+            winnerId = 3
             cellId = 3
         }
 
         if(player1.contains(3) && player1.contains(7)) {
-            if(player2.contains(3) && player2.contains(7) && emptyCells.contains(5)) {
-                winnerId = 5
-            }
+            cellId = 5
+        }
+        if(player2.contains(3) && player2.contains(7) && emptyCells.contains(5)) {
+            winnerId = 5
             cellId = 5
         }
 
