@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var currentUserId: String
 
     private var sessionId: String? = null
-    private lateinit var playerSymbol: String
+    private var playerSymbol: String? = null
 
     private var currentGamePlay: GamePlay = GamePlay.AI
 
@@ -55,6 +55,10 @@ class MainActivity : AppCompatActivity() {
     private var shouldShowDialog: Boolean = true
 
     private var shouldShowTurnText: Boolean = false
+
+    private var multiplayerGameOn: Boolean = false
+
+    private val keysList: ArrayList<String> = arrayListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,7 +88,8 @@ class MainActivity : AppCompatActivity() {
         shouldShowTurnText = if(currentGamePlay == GamePlay.AI) {
             activePlayer == 1
         } else {
-            ((activePlayer == 1 && playerSymbol == "X") || (activePlayer == 2 && playerSymbol == "O"))
+            ((activePlayer == 1 && playerSymbol != null && playerSymbol == "O")
+                    || (activePlayer == 2 && playerSymbol != null && playerSymbol == "X"))
         }
 
         turn_text_view.visibility = if(shouldShowTurnText) View.VISIBLE else View.GONE
@@ -120,12 +125,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun acceptButtonClick(editText: EditText) {
         var requestedUserEmail = editText.getString()
-        dbRef.child(USERS).child(splitEmail(requestedUserEmail)).child(REQUEST).push().setValue(currentUserEmail)
+        //dbRef.child(USERS).child(splitEmail(requestedUserEmail)).child(REQUEST).push().setValue(currentUserEmail)
 
         playOnline(splitEmail(requestedUserEmail) + splitEmail(currentUserEmail)) // will create the same node to play
         playerSymbol = "O"
         currentGamePlay = GamePlay.ONLINE
         invalidateOptionsMenu()
+        showTurnTextIfNecessary()
     }
 
     private fun requestButtonClick(editText: EditText) {
@@ -135,6 +141,8 @@ class MainActivity : AppCompatActivity() {
 
             playOnline(splitEmail(currentUserEmail) + splitEmail(email))
             playerSymbol = "X"
+            shouldShowDialog = false
+            showTurnTextIfNecessary()
 
         } else {
             editText.error = "Please enter a valid email"
@@ -157,13 +165,6 @@ class MainActivity : AppCompatActivity() {
 
         if(checkWinner()) {
             Log.d(TAG, "Game over")
-            val emptyCells = ArrayList<Int>()
-            (1..9).filterTo(emptyCells) { !player1.contains(it) && !player2.contains(it) }
-
-            if(emptyCells.size == 0) {
-                showMessage("Well played! Game draw")
-            }
-            resetGame()
             return
         }
 
@@ -171,15 +172,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun checkWinner() : Boolean{
-
-        val emptyCells = ArrayList<Int>()
-        (1..9).filterTo(emptyCells) { !player1.contains(it) && !player2.contains(it) }
-
-        if(emptyCells.size == 0) {
-            // Game draw
-            return true
-        }
-
         var winner = -1
 
         // row 1
@@ -256,13 +248,21 @@ class MainActivity : AppCompatActivity() {
 
         if(winner != -1) {
             if(winner == 1) {
-                showMessage("Player 1 wins the game")
+                showGameOverMessage("Player 1 wins the game")
             } else {
-                showMessage("Player 2 wins the game")
+                showGameOverMessage("Player 2 wins the game")
             }
             return true
+        } else {
+            val emptyCells = ArrayList<Int>()
+            (1..9).filterTo(emptyCells) { !player1.contains(it) && !player2.contains(it) }
+
+            if(emptyCells.size == 0) {
+                showGameOverMessage("Well played! Game draw")
+                return true
+            }
+            return false
         }
-        return false
     }
 
     fun autoPlay() {
@@ -297,7 +297,7 @@ class MainActivity : AppCompatActivity() {
         var winnerId:Int = -1
 
         // row 1
-        if((player1.contains(1) && player1.contains(2))) {
+        if((player1.contains(1) && player1.contains(2)) && emptyCells.contains(3)) {
             cellId = 3
         }
 
@@ -306,16 +306,16 @@ class MainActivity : AppCompatActivity() {
             winnerId = 3
         }
 
-        if((player1.contains(1) && player1.contains(3))) {
+        if((player1.contains(1) && player1.contains(3)) && emptyCells.contains(2)) {
             cellId = 2
         }
 
-        if( (player2.contains(1) && player2.contains(3))  && emptyCells.contains(2)) {
+        if( (player2.contains(1) && player2.contains(3)) && emptyCells.contains(2)) {
             winnerId = 2
             cellId = 2
         }
 
-        if(player1.contains(2) && player1.contains(3)) {
+        if(player1.contains(2) && player1.contains(3) &&  emptyCells.contains(1)) {
             cellId = 1
         }
 
@@ -325,7 +325,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // row 2
-        if((player1.contains(4) && player1.contains(5))) {
+        if((player1.contains(4) && player1.contains(5)) && emptyCells.contains(6)) {
             cellId = 6
         }
         if((player2.contains(4) && player2.contains(5))  && emptyCells.contains(6)) {
@@ -333,7 +333,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 6
         }
 
-        if((player1.contains(4) && player1.contains(6))) {
+        if((player1.contains(4) && player1.contains(6)) && emptyCells.contains(5)) {
             cellId = 5
         }
 
@@ -342,7 +342,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 5
         }
 
-        if(player1.contains(5) && player1.contains(6)) {
+        if(player1.contains(5) && player1.contains(6) && emptyCells.contains(4)) {
             cellId = 4
         }
 
@@ -352,7 +352,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // row 3
-        if((player1.contains(7) && player1.contains(8))) {
+        if((player1.contains(7) && player1.contains(8)) && emptyCells.contains(9)) {
             cellId = 9
         }
         if((player2.contains(7) && player2.contains(9)) && emptyCells.contains(9)) {
@@ -360,7 +360,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 9
         }
 
-        if((player1.contains(7) && player1.contains(9))) {
+        if((player1.contains(7) && player1.contains(9)) && emptyCells.contains(8)) {
             cellId = 8
         }
         if((player2.contains(7) && player2.contains(9)) && emptyCells.contains(8)) {
@@ -368,7 +368,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 8
         }
 
-        if(player1.contains(8) && player1.contains(9)) {
+        if(player1.contains(8) && player1.contains(9) && emptyCells.contains(7)) {
             cellId = 7
         }
         if(player2.contains(8) && player2.contains(9) && emptyCells.contains(7)) {
@@ -378,7 +378,7 @@ class MainActivity : AppCompatActivity() {
 
 
         // Col 1
-        if((player1.contains(1) && player1.contains(4))) {
+        if((player1.contains(1) && player1.contains(4))  && emptyCells.contains(7)) {
             cellId = 7
         }
         if((player2.contains(1) && player2.contains(4)) && emptyCells.contains(7)) {
@@ -386,7 +386,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 7
         }
 
-        if((player1.contains(1) && player1.contains(7))) {
+        if((player1.contains(1) && player1.contains(7)) && emptyCells.contains(4)) {
             cellId = 4
         }
         if((player2.contains(1) && player2.contains(7)) && emptyCells.contains(4)) {
@@ -394,7 +394,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 4
         }
 
-        if(player1.contains(4) && player1.contains(7)) {
+        if(player1.contains(4) && player1.contains(7) && emptyCells.contains(1)) {
             cellId = 1
         }
 
@@ -404,7 +404,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Col 2
-        if((player1.contains(2) && player1.contains(5))) {
+        if((player1.contains(2) && player1.contains(5)) && emptyCells.contains(8)) {
             cellId = 8
         }
         if( (player2.contains(2) && player2.contains(5)) && emptyCells.contains(8)) {
@@ -412,7 +412,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 8
         }
 
-        if((player1.contains(2) && player1.contains(8))) {
+        if((player1.contains(2) && player1.contains(8)) && emptyCells.contains(5)) {
             cellId = 5
         }
         if((player2.contains(2) && player2.contains(8)) && emptyCells.contains(5)) {
@@ -420,7 +420,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 5
         }
 
-        if(player1.contains(5) && player1.contains(8)) {
+        if(player1.contains(5) && player1.contains(8) && emptyCells.contains(2)) {
             if( player2.contains(5) && player2.contains(8) && emptyCells.contains(2)) {
                 winnerId = 2
             }
@@ -428,7 +428,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Col 2
-        if((player1.contains(3) && player1.contains(6))) {
+        if((player1.contains(3) && player1.contains(6)) && emptyCells.contains(9)) {
             cellId = 9
         }
         if( (player2.contains(3) && player2.contains(6)) && emptyCells.contains(9)) {
@@ -436,7 +436,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 9
         }
 
-        if((player1.contains(3) && player1.contains(9))) {
+        if((player1.contains(3) && player1.contains(9)) && emptyCells.contains(6)) {
             cellId = 6
         }
         if((player2.contains(3) && player2.contains(9)) && emptyCells.contains(6)) {
@@ -444,7 +444,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 6
         }
 
-        if(player1.contains(6) && player1.contains(9)) {
+        if(player1.contains(6) && player1.contains(9) && emptyCells.contains(3)) {
             cellId = 3
         }
         if( player2.contains(6) && player2.contains(9) && emptyCells.contains(3)) {
@@ -453,7 +453,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Diagonal 1
-        if((player1.contains(1) && player1.contains(5))) {
+        if((player1.contains(1) && player1.contains(5)) && emptyCells.contains(9)) {
             cellId = 9
         }
         if((player2.contains(1) && player2.contains(5)) && emptyCells.contains(9)) {
@@ -461,7 +461,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 9
         }
 
-        if((player1.contains(5) && player1.contains(9))) {
+        if((player1.contains(5) && player1.contains(9)) && emptyCells.contains(1)) {
             cellId = 1
         }
         if( (player2.contains(5) && player2.contains(9)) && emptyCells.contains(1)) {
@@ -469,7 +469,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 1
         }
 
-        if(player1.contains(1) && player1.contains(9)) {
+        if(player1.contains(1) && player1.contains(9) && emptyCells.contains(5)) {
             cellId = 5
         }
         if(player2.contains(1) && player2.contains(9) && emptyCells.contains(5)) {
@@ -478,7 +478,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Diagonal 1
-        if((player1.contains(3) && player1.contains(5))) {
+        if((player1.contains(3) && player1.contains(5)) && emptyCells.contains(7)) {
             cellId = 7
         }
         if((player2.contains(3) && player2.contains(5)) && emptyCells.contains(7)) {
@@ -486,7 +486,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 7
         }
 
-        if((player1.contains(5) && player1.contains(7))) {
+        if((player1.contains(5) && player1.contains(7)) && emptyCells.contains(3)) {
             cellId = 3
         }
         if( (player2.contains(5) && player2.contains(7)) && emptyCells.contains(3)) {
@@ -494,7 +494,7 @@ class MainActivity : AppCompatActivity() {
             cellId = 3
         }
 
-        if(player1.contains(3) && player1.contains(7)) {
+        if(player1.contains(3) && player1.contains(7) && emptyCells.contains(5)) {
             cellId = 5
         }
         if(player2.contains(3) && player2.contains(7) && emptyCells.contains(5)) {
@@ -532,33 +532,37 @@ class MainActivity : AppCompatActivity() {
     private fun resetGame() {
         player1.clear()
         player2.clear()
+        keysList.clear()
 
-        if(currentGamePlay == GamePlay.ONLINE) {
+        if(currentGamePlay == GamePlay.ONLINE && sessionId != null) {
             dbRef.child(ONLINE_PLAY).child(sessionId).setValue(null)
+            shouldShowDialog = true
+            playerSymbol = null
+        } else {
+            activePlayer = 1
         }
 
-        // Clear board
         clearAllButtons()
-        activePlayer = 1
+        showTurnTextIfNecessary()
+
+
     }
 
     private fun clearAllButtons() {
-        handler.postDelayed({
-            button1.reset()
-            button2.reset()
-            button3.reset()
-            button4.reset()
-            button5.reset()
-            button6.reset()
-            button7.reset()
-            button8.reset()
-            button9.reset()
-        }, 3000)
+        button1.reset()
+        button2.reset()
+        button3.reset()
+        button4.reset()
+        button5.reset()
+        button6.reset()
+        button7.reset()
+        button8.reset()
+        button9.reset()
     }
 
     fun incomingRequests() {
         dbRef.child(USERS).child(splitEmail(currentUserEmail)).child(REQUEST)
-                .addValueEventListener(object : ValueEventListener {
+                .addValueEventListener(object: ValueEventListener {
                     override fun onCancelled(p0: DatabaseError?) {
 
                     }
@@ -567,10 +571,8 @@ class MainActivity : AppCompatActivity() {
                         try {
                             if (data != null) {
                                 val values = data.value as HashMap<String, Any>
-                                var requestEmail: String = values[values.keys.last()] as String
-                                if(shouldShowDialog) {
-                                    showAcceptDialog(requestEmail)
-                                }
+                                var requestEmail: String = values[values.keys.elementAt(values.keys.size - 1)] as String
+                                showAcceptDialog(requestEmail)
 
                                 dbRef.child(USERS).child(splitEmail(currentUserEmail)).child(REQUEST).setValue(true)
                             }
@@ -624,15 +626,22 @@ class MainActivity : AppCompatActivity() {
                             if (data != null) {
                                 val values = data.value as HashMap<String, Any>
 
-                                var player = values[values.keys.last()]
+                                for(entry in values) {
+                                    var key = entry.key
 
-                                activePlayer = if(player != currentUserEmail) {
-                                    if(playerSymbol === "X") 1 else 2
-                                } else {
-                                    if(playerSymbol === "X") 2 else 1
+                                    if(!keysList.contains(key)) {
+                                        keysList.add(key)
+                                        var player = entry.value
+                                        activePlayer = if(player != currentUserEmail) {
+                                            if(playerSymbol === "X") 1 else 2
+                                        } else {
+                                            if(playerSymbol === "X") 2 else 1
+                                        }
+
+                                        playForOpponent(entry.key.split("-")[1].toInt())
+                                        break
+                                    }
                                 }
-
-                                playForOpponent(values.keys.last().split("-")[1].toInt())
                             }
                         } catch (ex: Exception) {
                             Log.d(TAG, ex.printStackTrace().toString())
@@ -652,6 +661,7 @@ class MainActivity : AppCompatActivity() {
                 sharedPreferences.edit().putString(SP_KEY, GamePlay.AI.name).apply()
                 currentGamePlay = GamePlay.AI
                 request_fab.visibility = View.GONE
+
             }
 
             R.id.menu_play_online -> {
@@ -660,6 +670,8 @@ class MainActivity : AppCompatActivity() {
                 request_fab.visibility = View.VISIBLE
             }
         }
+        resetGame()
+        showTurnTextIfNecessary()
         invalidateOptionsMenu()
         return super.onOptionsItemSelected(item)
     }
@@ -677,6 +689,14 @@ class MainActivity : AppCompatActivity() {
 
     fun showMessage(msg: String) {
         val snackbar = Snackbar.make(main_layout, msg, Snackbar.LENGTH_LONG)
+        snackbar.show()
+    }
+
+    fun showGameOverMessage(msg: String) {
+        val snackbar = Snackbar.make(main_layout, msg, Snackbar.LENGTH_INDEFINITE)
+        snackbar.setAction("Play again", {
+            resetGame()
+        })
         snackbar.show()
     }
 
