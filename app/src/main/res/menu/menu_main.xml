@@ -10,4 +10,9 @@
         android:id="@+id/menu_play_online"
         app:showAsAction="ifRoom"
         android:visible="false" />
+
+    <item android:title="@string/str_logout"
+        android:id="@+id/menu_logout"
+        app:showAsAction="never"
+        android:visible="true" />
 </menu>

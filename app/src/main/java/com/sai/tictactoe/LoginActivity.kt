@@ -48,37 +48,48 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
+        progress_bar.visibility = View.VISIBLE
         loginWithFirebase(email_edit_text.getString(), password_edit_text.getString())
     }
 
-    fun loginWithFirebase(email: String, password: String) {
+    private fun loginWithFirebase(email: String, password: String) {
         mAuth.let {
-            mAuth.createUserWithEmailAndPassword(email, password)
+            mAuth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
-                            //Save user in Firebase database
-                            if(mAuth.currentUser != null) {
-                                dbRef.child(USERS).child(splitEmail(mAuth.currentUser!!.email)).child(REQUEST).setValue(mAuth.currentUser!!.uid)
-                            }
+                            progress_bar.visibility = View.GONE
                             goToMain()
                         } else {
-                            showMessage("There was an error logging in. Please verify your email and password.")
+                            mAuth.createUserWithEmailAndPassword(email, password)
+                                    .addOnCompleteListener(this) { task1 ->
+                                        if (task1.isSuccessful) {
+                                            //Save user in Firebase database
+                                            if (mAuth.currentUser != null) {
+                                                dbRef.child(USERS).child(splitEmail(mAuth.currentUser!!.email)).child(REQUEST).setValue(mAuth.currentUser!!.uid)
+
+                                                goToMain()
+                                            }
+                                        } else {
+                                            showMessage("There was an error logging in. Please verify your email and password.")
+                                        }
+                                        progress_bar.visibility = View.GONE
+                                    }
                         }
                     }
         }
     }
 
-    fun goToMain() {
+    private fun goToMain() {
         val currentUser: FirebaseUser? = mAuth.currentUser
 
         if(currentUser != null) {
             val mainIntent = Intent(this, MainActivity::class.java)
+            mainIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
             mainIntent.putExtra(ARG_EMAIL, currentUser.email)
             mainIntent.putExtra(ARG_ID, currentUser.uid)
 
             startActivity(mainIntent)
-
-            showMessage("Welcome!")
+            finish()
         }
     }
 }

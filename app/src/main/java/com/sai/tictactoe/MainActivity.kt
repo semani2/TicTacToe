@@ -1,6 +1,8 @@
 package com.sai.tictactoe
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -22,6 +24,7 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import android.widget.EditText
 import android.widget.TextView
+import com.google.firebase.auth.FirebaseAuth
 
 
 class MainActivity : AppCompatActivity() {
@@ -39,6 +42,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var mFirebaseAnalytics: FirebaseAnalytics
 
+    private lateinit var mAuth: FirebaseAuth
+
     private var mDatabase = FirebaseDatabase.getInstance()
     private val dbRef = mDatabase.reference
 
@@ -52,8 +57,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var sharedPreferences: SharedPreferences
 
-    private var shouldShowDialog: Boolean = true
-
     private var shouldShowTurnText: Boolean = false
 
     private var multiplayerGameOn: Boolean = false
@@ -65,6 +68,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+
+        mAuth = FirebaseAuth.getInstance()
 
         currentUserEmail = intent.extras.getString(ARG_EMAIL)
         currentUserId = intent.extras.getString(ARG_ID)
@@ -84,15 +89,24 @@ class MainActivity : AppCompatActivity() {
         showTurnTextIfNecessary()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        resetGame()
+    }
+
     private fun showTurnTextIfNecessary() {
-        shouldShowTurnText = if(currentGamePlay == GamePlay.AI) {
+        shouldShowTurnText = isCurrentPlayerTurn()
+
+        turn_text_view.visibility = if(shouldShowTurnText) View.VISIBLE else View.GONE
+    }
+
+    private fun isCurrentPlayerTurn(): Boolean {
+        return if(currentGamePlay == GamePlay.AI) {
             activePlayer == 1
         } else {
             ((activePlayer == 1 && playerSymbol != null && playerSymbol == "O")
                     || (activePlayer == 2 && playerSymbol != null && playerSymbol == "X"))
         }
-
-        turn_text_view.visibility = if(shouldShowTurnText) View.VISIBLE else View.GONE
     }
 
     fun buttonClick(v: View) {
@@ -113,9 +127,11 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "Clicked button $cellId")
         // Commenting out for now, we can have both online and local playing based on settings.
         if(currentGamePlay == GamePlay.AI) {
+            if(!isCurrentPlayerTurn()) return
             playGame(cellId, buttonClicked)
         } else {
             if(sessionId != null) {
+                if(!isCurrentPlayerTurn()) return
                 dbRef.child(ONLINE_PLAY).child(sessionId).child(KEY + cellId.toString()).setValue(currentUserEmail)
             } else {
                 showMessage("Send a request to start a game")
@@ -129,9 +145,11 @@ class MainActivity : AppCompatActivity() {
 
         playOnline(splitEmail(requestedUserEmail) + splitEmail(currentUserEmail)) // will create the same node to play
         playerSymbol = "O"
-        currentGamePlay = GamePlay.ONLINE
+        toggleCurrentGamePlay(GamePlay.ONLINE)
         invalidateOptionsMenu()
         showTurnTextIfNecessary()
+        showPlayerName(requestedUserEmail)
+        request_fab.visibility = View.GONE
     }
 
     private fun requestButtonClick(editText: EditText) {
@@ -141,12 +159,17 @@ class MainActivity : AppCompatActivity() {
 
             playOnline(splitEmail(currentUserEmail) + splitEmail(email))
             playerSymbol = "X"
-            shouldShowDialog = false
             showTurnTextIfNecessary()
-
+            showPlayerName(email)
+            request_fab.visibility = View.GONE
         } else {
             editText.error = "Please enter a valid email"
         }
+    }
+
+    private fun showPlayerName(email: String) {
+        game_text_view.text = getString(R.string.str_game_on, email)
+        game_text_view.visibility = View.VISIBLE
     }
 
     private fun playGame(cellId: Int, selectedButton: Button) {
@@ -536,16 +559,16 @@ class MainActivity : AppCompatActivity() {
 
         if(currentGamePlay == GamePlay.ONLINE && sessionId != null) {
             dbRef.child(ONLINE_PLAY).child(sessionId).setValue(null)
-            shouldShowDialog = true
+            sessionId = null
             playerSymbol = null
+            request_fab.visibility = View.VISIBLE
         } else {
             activePlayer = 1
         }
 
         clearAllButtons()
         showTurnTextIfNecessary()
-
-
+        game_text_view.visibility = View.GONE
     }
 
     private fun clearAllButtons() {
@@ -609,7 +632,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         dialog.show()
-        shouldShowDialog = false
     }
 
     fun playOnline(sessionId: String) {
@@ -644,6 +666,9 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                         } catch (ex: Exception) {
+                            // Error on server reset game with message
+                            //showMessage("Your opponent has quit the game. Please start a new game.")
+                            //handler.postDelayed({resetGame()}, 3000)
                             Log.d(TAG, ex.printStackTrace().toString())
                         }
                     }
@@ -658,22 +683,32 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when(item.itemId) {
             R.id.menu_play_ai -> {
-                sharedPreferences.edit().putString(SP_KEY, GamePlay.AI.name).apply()
-                currentGamePlay = GamePlay.AI
-                request_fab.visibility = View.GONE
-
+                toggleCurrentGamePlay(GamePlay.AI)
+                resetGame()
+                showTurnTextIfNecessary()
             }
 
             R.id.menu_play_online -> {
-                sharedPreferences.edit().putString(SP_KEY, GamePlay.ONLINE.name).apply()
-                currentGamePlay = GamePlay.ONLINE
-                request_fab.visibility = View.VISIBLE
+                toggleCurrentGamePlay(GamePlay.ONLINE)
+                resetGame()
+                showTurnTextIfNecessary()
+            }
+
+            R.id.menu_logout -> {
+                mAuth.signOut()
+                goToLogin()
             }
         }
-        resetGame()
-        showTurnTextIfNecessary()
         invalidateOptionsMenu()
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun goToLogin() {
+        val loginIntent = Intent(this, LoginActivity::class.java)
+        loginIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+
+        startActivity(loginIntent)
+        finish()
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
@@ -693,10 +728,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showGameOverMessage(msg: String) {
-        val snackbar = Snackbar.make(main_layout, msg, Snackbar.LENGTH_INDEFINITE)
-        snackbar.setAction("Play again", {
-            resetGame()
-        })
+        var snackbar: Snackbar
+        if(currentGamePlay == GamePlay.AI) {
+            snackbar = Snackbar.make(main_layout, msg, Snackbar.LENGTH_INDEFINITE)
+            snackbar.setAction("Play again", {
+                resetGame()
+            })
+        } else {
+            snackbar = Snackbar.make(main_layout, msg, Snackbar.LENGTH_LONG)
+            handler.postDelayed({
+                resetGame()
+            }, 3000)
+        }
         snackbar.show()
     }
 
@@ -718,6 +761,21 @@ class MainActivity : AppCompatActivity() {
             dialog.dismiss()
         }
         dialog.show()
+    }
+
+    private fun toggleCurrentGamePlay(gameplay: GamePlay) {
+        currentGamePlay = gameplay
+        sharedPreferences.edit().putString(SP_KEY, gameplay.name).apply()
+        request_fab.visibility = if(gameplay == GamePlay.AI) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+    }
+
+    override fun onBackPressed() {
+        setResult(Activity.RESULT_OK)
+        finish()
     }
 }
 

@@ -83,4 +83,6 @@
     <string name="str_play_online">Play online</string>
     <string name="str_request_from">You have a game request from:</string>
     <string name="str_your_turn">Your turn!</string>
+    <string name="str_game_on">Game on - %1$s!</string>
+    <string name="str_logout">Logout</string>
 </resources>

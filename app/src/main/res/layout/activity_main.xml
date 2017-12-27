@@ -26,7 +26,8 @@
             android:textColor="@android:color/white"
             android:id="@+id/game_text_view"
             tools:text="Game on - sai@gmail.com"
-            android:textAlignment="center"/>
+            android:textAlignment="center"
+            android:visibility="gone"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
