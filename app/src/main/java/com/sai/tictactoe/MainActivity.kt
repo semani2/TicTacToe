@@ -142,6 +142,12 @@ class MainActivity : AppCompatActivity() {
 
         if(checkWinner()) {
             Log.d(TAG, "Game over")
+            val emptyCells = ArrayList<Int>()
+            (1..9).filterTo(emptyCells) { !player1.contains(it) && !player2.contains(it) }
+
+            if(emptyCells.size == 0) {
+                showGameOverMessage("Well played! Game draw")
+            }
             resetGame()
             return
         }
@@ -150,6 +156,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun checkWinner() : Boolean{
+
+        val emptyCells = ArrayList<Int>()
+        (1..9).filterTo(emptyCells) { !player1.contains(it) && !player2.contains(it) }
+
+        if(emptyCells.size == 0) {
+            // Game draw
+            return true
+        }
+
         var winner = -1
 
         // row 1
@@ -240,10 +255,11 @@ class MainActivity : AppCompatActivity() {
             val emptyCells = ArrayList<Int>()
             (1..9).filterTo(emptyCells) { !player1.contains(it) && !player2.contains(it) }
 
-            val r = Random()
-            val randIndex = r.nextInt(emptyCells.size - 0) + 0
+            /*val r = Random()
+            val randIndex = r.nextInt(emptyCells.size - 0) + 0*/
 
-            val cellId = emptyCells[randIndex]
+            //val cellId = emptyCells[randIndex]
+            val cellId = getCellId(emptyCells)
 
             val buttonToSelect= when(cellId) {
                 1 -> button1
@@ -259,6 +275,198 @@ class MainActivity : AppCompatActivity() {
             }
             playGame(cellId, buttonToSelect!!)
         }, 1000)
+    }
+
+    private fun getCellId(emptyCells: ArrayList<Int>): Int {
+        var cellId: Int = -1
+        var winnerId:Int = -1
+
+        // row 1
+        if((player1.contains(1) && player1.contains(2))) {
+            if((player2.contains(1) && player2.contains(2)) && emptyCells.contains(3)) {
+                winnerId = 3
+            }
+            cellId = 3
+        }
+
+        if((player1.contains(1) && player1.contains(3))) {
+            if( (player2.contains(1) && player2.contains(3))  && emptyCells.contains(2)) {
+                winnerId = 2
+            }
+            cellId = 2
+        }
+
+        if(player1.contains(2) && player1.contains(3)) {
+            if(player2.contains(2) && player2.contains(3) &&  emptyCells.contains(1)) {
+                winnerId = 1
+            }
+            cellId = 1
+        }
+
+        // row 2
+        if((player1.contains(4) && player1.contains(5))) {
+            if((player2.contains(4) && player2.contains(5))  && emptyCells.contains(6)) {
+                winnerId = 6
+            }
+            cellId = 6
+        }
+
+        if((player1.contains(4) && player1.contains(6))) {
+            if((player2.contains(4) && player2.contains(6))  && emptyCells.contains(5)) {
+                winnerId = 5
+            }
+            cellId = 5
+        }
+
+        if(player1.contains(5) && player1.contains(6)) {
+            if(player2.contains(5) && player2.contains(6) && emptyCells.contains(4)) {
+                winnerId = 4
+            }
+            cellId = 4
+        }
+
+        // row 3
+        if((player1.contains(7) && player1.contains(8))) {
+            if((player2.contains(7) && player2.contains(9)) && emptyCells.contains(9)) {
+                winnerId = 9
+            }
+            cellId = 9
+        }
+
+        if((player1.contains(7) && player1.contains(9))) {
+            if((player2.contains(7) && player2.contains(9)) && emptyCells.contains(8)) {
+                winnerId = 8
+            }
+            cellId = 8
+        }
+
+        if(player1.contains(8) && player1.contains(9)) {
+            if(player2.contains(8) && player2.contains(9) && emptyCells.contains(7)) {
+                winnerId = 7
+            }
+            cellId = 7
+        }
+
+
+        // Col 1
+        if((player1.contains(1) && player1.contains(4))) {
+            if((player2.contains(1) && player2.contains(4)) && emptyCells.contains(7)) {
+                winnerId = 7
+            }
+            cellId = 7
+        }
+
+        if((player1.contains(1) && player1.contains(7))) {
+            if((player2.contains(1) && player2.contains(7)) && emptyCells.contains(4)) {
+                winnerId = 4
+            }
+            cellId = 4
+        }
+
+        if(player1.contains(4) && player1.contains(7)) {
+            if(player2.contains(4) && player2.contains(7) && emptyCells.contains(1)) {
+                winnerId = 1
+            }
+            cellId = 1
+        }
+
+        // Col 2
+        if((player1.contains(2) && player1.contains(5))) {
+            if( (player2.contains(2) && player2.contains(5)) && emptyCells.contains(8)) {
+                winnerId = 8
+            }
+            cellId = 8
+        }
+
+        if((player1.contains(2) && player1.contains(8))) {
+            if((player2.contains(2) && player2.contains(8)) && emptyCells.contains(5)) {
+                winnerId = 5
+            }
+            cellId = 5
+        }
+
+        if(player1.contains(5) && player1.contains(8)) {
+            if( player2.contains(5) && player2.contains(8) && emptyCells.contains(2)) {
+                winnerId = 2
+            }
+            cellId = 2
+        }
+
+        // Col 2
+        if((player1.contains(3) && player1.contains(6))) {
+            if( (player2.contains(3) && player2.contains(6)) && emptyCells.contains(9)) {
+                winnerId = 9
+            }
+            cellId = 9
+        }
+
+        if((player1.contains(3) && player1.contains(9))) {
+            if((player2.contains(3) && player2.contains(9)) && emptyCells.contains(6)) {
+                winnerId = 6
+            }
+            cellId = 6
+        }
+
+        if(player1.contains(6) && player1.contains(9)) {
+            if( player2.contains(6) && player2.contains(9) && emptyCells.contains(3)) {
+                winnerId = 3
+            }
+            cellId = 3
+        }
+
+        // Diagonal 1
+        if((player1.contains(1) && player1.contains(5))) {
+            if((player2.contains(1) && player2.contains(5)) && emptyCells.contains(9)) {
+                winnerId = 9
+            }
+            cellId = 9
+        }
+
+        if((player1.contains(5) && player1.contains(9))) {
+            if( (player2.contains(5) && player2.contains(9)) && emptyCells.contains(1)) {
+                winnerId = 1
+            }
+            cellId = 1
+        }
+
+        if(player1.contains(1) && player1.contains(9)) {
+            if(player2.contains(1) && player2.contains(9) && emptyCells.contains(5)) {
+                winnerId = 5
+            }
+            cellId = 5
+        }
+
+        // Diagonal 1
+        if((player1.contains(3) && player1.contains(5))) {
+            if((player2.contains(3) && player2.contains(5)) && emptyCells.contains(7)) {
+                winnerId = 7
+            }
+            cellId = 7
+        }
+
+        if((player1.contains(5) && player1.contains(7))) {
+            if( (player2.contains(5) && player2.contains(7)) && emptyCells.contains(3)) {
+                winnerId = 3
+            }
+            cellId = 3
+        }
+
+        if(player1.contains(3) && player1.contains(7)) {
+            if(player2.contains(3) && player2.contains(7) && emptyCells.contains(5)) {
+                winnerId = 5
+            }
+            cellId = 5
+        }
+
+        if(winnerId != -1 && emptyCells.contains(winnerId)) {
+            return winnerId
+        }
+
+        if(cellId == -1 || !emptyCells.contains(cellId)) {
+            return emptyCells[0]
+        }
+
+        return cellId
     }
 
     fun playForOpponent(cellId: Int) {
@@ -287,6 +495,7 @@ class MainActivity : AppCompatActivity() {
 
         // Clear board
         clearAllButtons()
+        activePlayer = 1
     }
 
     private fun clearAllButtons() {
