@@ -85,4 +85,6 @@
     <string name="str_your_turn">Your turn!</string>
     <string name="str_game_on">Game on - %1$s!</string>
     <string name="str_logout">Logout</string>
+
+    <string name="banner_ad_unit_id">ca-app-pub-8188678914265559/8003292969</string>
 </resources>

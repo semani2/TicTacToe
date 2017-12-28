@@ -24,6 +24,10 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import android.widget.EditText
 import android.widget.TextView
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import com.google.firebase.auth.FirebaseAuth
 
 
@@ -87,6 +91,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         showTurnTextIfNecessary()
+
+        MobileAds.initialize(this, "ca-app-pub-8188678914265559~1551055943")
+        val adRequest = AdRequest.Builder().build()
+        ad_view.loadAd(adRequest)
     }
 
     override fun onDestroy() {
