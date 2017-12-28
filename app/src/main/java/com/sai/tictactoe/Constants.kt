@@ -19,3 +19,5 @@ enum class GamePlay {
     AI,
     ONLINE
 }
+
+val SUBJECT = "Feedback for X's & O's"

@@ -4,10 +4,12 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.support.design.widget.Snackbar
+import android.support.v4.view.MenuItemCompat
 import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.Menu
@@ -23,6 +25,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import android.widget.EditText
+import android.support.v7.widget.ShareActionProvider;
+import android.text.Html
 import android.widget.TextView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -615,6 +619,26 @@ class MainActivity : AppCompatActivity() {
                 })
     }
 
+    private fun showLicensesDialog() {
+        val inflater = layoutInflater
+        val dialoglayout = inflater.inflate(R.layout.licenses_dialog_layout, null)
+
+        val licenseTextView = dialoglayout.findViewById<TextView>(R.id.licenses_text_view)
+        licenseTextView.text = Html.fromHtml("<div>Icons made by <a href=\"http://www.freepik.com\" title=\"Freepik\">Freepik</a> from <a href=\"https://www.flaticon.com/\" title=\"Flaticon\">www.flaticon.com</a> is licensed by <a href=\"http://creativecommons.org/licenses/by/3.0/\" title=\"Creative Commons BY 3.0\" target=\"_blank\">CC 3.0 BY</a></div>")
+
+        val okButton = dialoglayout.findViewById<Button>(R.id.ok_button)
+        val builder = AlertDialog.Builder(this)
+        builder.setView(dialoglayout)
+
+        val dialog = builder.create()
+        okButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+
     private fun showAcceptDialog(requestEmail: String) {
         val inflater = layoutInflater
         val dialoglayout = inflater.inflate(R.layout.request_dialog_layout, null)
@@ -683,8 +707,20 @@ class MainActivity : AppCompatActivity() {
                 })
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
+
+        // Locate MenuItem with ShareActionProvider
+        val item = menu.findItem(R.id.menu_share)
+
+        val sendIntent = Intent()
+        sendIntent.action = Intent.ACTION_SEND
+        sendIntent.putExtra(Intent.EXTRA_TEXT, "Join me in playing one of the coolest games. Download X's and O's from the play store.")
+        sendIntent.type = "text/plain"
+
+        val mShareActionProvider = MenuItemCompat.getActionProvider(item) as ShareActionProvider
+        mShareActionProvider.setShareIntent(sendIntent)
+
         return true
     }
 
@@ -705,6 +741,25 @@ class MainActivity : AppCompatActivity() {
             R.id.menu_logout -> {
                 mAuth.signOut()
                 goToLogin()
+            }
+
+            R.id.menu_send_feedback -> {
+                var mailString: String ="mailto:chithalabs@gmail.com" +
+                        "?subject=" + Uri.encode(SUBJECT)
+
+                val emailIntent = Intent(Intent.ACTION_SENDTO)
+                emailIntent.data = Uri.parse(mailString)
+
+                try {
+                    startActivity(emailIntent)
+                }
+                catch(e: Exception) {
+                    showMessage("Sorry! Could not find application to share feedback.")
+                }
+            }
+
+            R.id.menu_licenses -> {
+                showLicensesDialog()
             }
         }
         invalidateOptionsMenu()

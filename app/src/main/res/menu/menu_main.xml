@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:bwq="http://schemas.android.com/apk/res-auto">
 
     <item android:title="@string/str_play_ai"
         android:id="@+id/menu_play_ai"
@@ -13,6 +14,22 @@
 
     <item android:title="@string/str_logout"
         android:id="@+id/menu_logout"
+        app:showAsAction="never"
+        android:visible="true" />
+
+    <item android:title="@string/str_share"
+        android:id="@+id/menu_share"
+        android:visible="true"
+        bwq:actionProviderClass="android.support.v7.widget.ShareActionProvider"
+        bwq:showAsAction="ifRoom"/>
+
+    <item android:title="@string/str_send_feedback"
+        android:id="@+id/menu_send_feedback"
+        app:showAsAction="never"
+        android:visible="true" />
+
+    <item android:title="@string/str_licenses"
+        android:id="@+id/menu_licenses"
         app:showAsAction="never"
         android:visible="true" />
 </menu>
