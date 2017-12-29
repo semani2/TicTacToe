@@ -715,7 +715,8 @@ class MainActivity : AppCompatActivity() {
 
         val sendIntent = Intent()
         sendIntent.action = Intent.ACTION_SEND
-        sendIntent.putExtra(Intent.EXTRA_TEXT, "Join me in playing one of the coolest games. Download X's and O's from the play store.")
+        sendIntent.putExtra(Intent.EXTRA_TEXT, "Join me in playing one of the coolest games. " +
+                "Download X's and O's from the play store - https://play.google.com/store/apps/details?id=com.sai.tictactoe")
         sendIntent.type = "text/plain"
 
         val mShareActionProvider = MenuItemCompat.getActionProvider(item) as ShareActionProvider
